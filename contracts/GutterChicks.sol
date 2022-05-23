@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 contract GutterChicks is ERC721, Ownable {
     using Strings for uint256;
@@ -13,6 +14,12 @@ contract GutterChicks is ERC721, Ownable {
     Counters.Counter private supply;
 
     IERC20 public rewardsToken;
+
+    IERC1155 gutterCats;
+    IERC1155 gutterRats;
+    IERC1155 gutterDogs;
+    IERC1155 gutterPigeons;
+    IERC1155 gutterClones;
 
     // The URI of your IPFS/hosting server for the metadata folder.
     // Used in the format: "ipfs://your_uri/".
@@ -26,6 +33,9 @@ contract GutterChicks is ERC721, Ownable {
 
     // Price of one NFT
     uint256 public cost = 0.05 ether;
+
+    // Price of one NFT for presale
+    uint256 public presaleCost = 0.04 ether;
 
     // The maximum supply of your collection
     uint256 public maxSupply = 3000;
@@ -62,6 +72,12 @@ contract GutterChicks is ERC721, Ownable {
     // Mapping of Token Id to staked state
     mapping(uint256 => bool) public stakedState;
 
+    // Mapping of Gutter Gang collections to index
+    mapping(uint256 => IERC1155) public gutterCollections;
+
+    // Mapping for keeping track of NFTs already used for minting in the pre-sale
+    mapping(uint256 => mapping(uint256 => bool)) public usedTokens;
+
     // Rewards per hour per token deposited in wei.
     // Rewards are cumulated once every hour.
     uint256 private rewardsPerHour;
@@ -69,7 +85,24 @@ contract GutterChicks is ERC721, Ownable {
     // Constructor function that sets name and symbol
     // of the collection, cost, max supply and the maximum
     // amount a user can mint per transaction
-    constructor() ERC721("Gutter Chicks", "GC") {}
+    constructor(
+        IERC1155 _cats,
+        IERC1155 _rats,
+        IERC1155 _dogs,
+        IERC1155 _pigeons,
+        IERC1155 _clones
+    ) ERC721("Gutter Chicks", "GC") {
+        gutterCats = _cats;
+        gutterCollections[0] = gutterCats;
+        gutterRats = _rats;
+        gutterCollections[1] = gutterRats;
+        gutterDogs = _dogs;
+        gutterCollections[2] = gutterDogs;
+        gutterPigeons = _pigeons;
+        gutterCollections[3] = gutterPigeons;
+        gutterClones = _clones;
+        gutterCollections[4] = gutterClones;
+    }
 
     // Modifier that ensures the maximum supply and
     // the maximum amount to mint per transaction
@@ -100,6 +133,26 @@ contract GutterChicks is ERC721, Ownable {
         require(msg.value >= cost * _mintAmount, "Insufficient funds!");
 
         _mintLoop(msg.sender, _mintAmount);
+    }
+
+    // Pre-Sale mint function for owners of Gutter Gang collections
+    function presaleMint(uint256 _collectionId, uint256 _tokenId)
+        external
+        payable
+    {
+        require(supply.current() + 1 <= maxSupply, "Max supply exceeded!");
+        require(
+            gutterCollections[_collectionId].balanceOf(msg.sender, _tokenId) >
+                0,
+            "You own no NFTs form the Gutter Collections!"
+        );
+        require(msg.value >= presaleCost, "Insufficient funds!");
+        require(
+            usedTokens[_collectionId][_tokenId] == false,
+            "This token was alread used for minting"
+        );
+        usedTokens[_collectionId][_tokenId] = true;
+        _mintLoop(msg.sender, 1);
     }
 
     // Mint function for owner that allows for free minting for a specified address
