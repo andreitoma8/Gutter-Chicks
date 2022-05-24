@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
-contract GutterChicks is ERC721, Ownable {
+contract GutterCatChicks is ERC721, Ownable {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
@@ -91,7 +91,7 @@ contract GutterChicks is ERC721, Ownable {
         IERC1155 _dogs,
         IERC1155 _pigeons,
         IERC1155 _clones
-    ) ERC721("Gutter Chicks", "GC") {
+    ) ERC721("Gutter Cat Chicks", "GCC") {
         gutterCats = _cats;
         gutterCollections[0] = gutterCats;
         gutterRats = _rats;
