@@ -91,7 +91,7 @@ contract GutterCatChicks is ERC721, Ownable {
         IERC1155 _dogs,
         IERC1155 _pigeons,
         IERC1155 _clones
-    ) ERC721("Gutter Cat Chicks", "GCC") {
+    ) ERC721("Gutter Cat Chicks", "GCX") {
         gutterCats = _cats;
         gutterCollections[0] = gutterCats;
         gutterRats = _rats;
@@ -229,7 +229,7 @@ contract GutterCatChicks is ERC721, Ownable {
         return ownedTokenIds;
     }
 
-    function getSaleState() external view returns (uint256) {
+    function getSaleState() external view returns (uint256 _salestate) {
         if (presale) {
             return 1;
         } else if (!paused) {
