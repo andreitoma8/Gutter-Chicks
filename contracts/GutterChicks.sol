@@ -229,6 +229,16 @@ contract GutterCatChicks is ERC721, Ownable {
         return ownedTokenIds;
     }
 
+    function getSaleState() external view returns (uint256) {
+        if (presale) {
+            return 1;
+        } else if (!paused) {
+            return 2;
+        } else {
+            return 0;
+        }
+    }
+
     function userStakeInfo(address _user)
         public
         view
