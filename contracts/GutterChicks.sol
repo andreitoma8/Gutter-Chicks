@@ -26,7 +26,7 @@ contract GutterCatChicks is ERC721, Ownable {
     string internal uri;
 
     // The format of your metadata files
-    string internal uriSuffix = ".json";
+    string internal constant uriSuffix = ".json";
 
     // The URI for your Hidden Metadata
     string internal hiddenMetadataUri;
@@ -38,7 +38,13 @@ contract GutterCatChicks is ERC721, Ownable {
     uint256 public presaleCost = 0.04 ether;
 
     // The maximum supply of your collection
-    uint256 public maxSupply = 3000;
+    uint256 public constant maxSupply = 3000;
+
+    // Amount of Chicks minted from team reserve
+    uint256 public currentTeamSupply = 0;
+
+    // Amount of Chicks reserved for the team and giveaways
+    uint256 public constant maxTeamSupply = 50;
 
     // The maximum mint amount allowed per transaction
     uint256 public maxMintAmountPerTx = 5;
@@ -104,31 +110,21 @@ contract GutterCatChicks is ERC721, Ownable {
         gutterCollections[4] = gutterClones;
     }
 
-    // Modifier that ensures the maximum supply and
-    // the maximum amount to mint per transaction
-    modifier mintCompliance(uint256 _mintAmount) {
-        require(
-            _mintAmount > 0 && _mintAmount <= maxMintAmountPerTx,
-            "Invalid mint amount!"
-        );
-        require(
-            supply.current() + _mintAmount <= maxSupply,
-            "Max supply exceeded!"
-        );
-        _;
-    }
-
     // Returns the current supply of the collection
     function totalSupply() public view returns (uint256) {
         return supply.current();
     }
 
     // Mint function
-    function mint(uint256 _mintAmount)
-        public
-        payable
-        mintCompliance(_mintAmount)
-    {
+    function mint(uint256 _mintAmount) public payable {
+        require(
+            _mintAmount > 0 && _mintAmount <= maxMintAmountPerTx,
+            "Invalid mint amount!"
+        );
+        require(
+            supply.current() + _mintAmount <= maxSupply - maxTeamSupply,
+            "Max supply exceeded!"
+        );
         require(!paused, "The contract is paused!");
         require(msg.value >= cost * _mintAmount, "Insufficient funds!");
 
@@ -158,9 +154,10 @@ contract GutterCatChicks is ERC721, Ownable {
     // Mint function for owner that allows for free minting for a specified address
     function mintForAddress(uint256 _mintAmount, address _receiver)
         public
-        mintCompliance(_mintAmount)
         onlyOwner
     {
+        require(currentTeamSupply <= maxTeamSupply);
+        currentTeamSupply++;
         _mintLoop(_receiver, _mintAmount);
     }
 
