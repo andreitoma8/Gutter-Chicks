@@ -15,12 +15,6 @@ contract GutterCatChicks is ERC721, Ownable {
 
     IERC20 public rewardsToken;
 
-    IERC1155 gutterCats;
-    IERC1155 gutterRats;
-    IERC1155 gutterDogs;
-    IERC1155 gutterPigeons;
-    IERC1155 gutterClones;
-
     // The URI of your IPFS/hosting server for the metadata folder.
     // Used in the format: "ipfs://your_uri/".
     string internal uri;
@@ -78,12 +72,6 @@ contract GutterCatChicks is ERC721, Ownable {
     // Mapping of Token Id to staked state
     mapping(uint256 => bool) public stakedState;
 
-    // Mapping of Gutter Gang collections to index
-    mapping(uint256 => IERC1155) public gutterCollections;
-
-    // Mapping for keeping track of NFTs already used for minting in the pre-sale
-    mapping(uint256 => mapping(uint256 => bool)) public usedTokens;
-
     // Mapping of whitelisted addresses
     mapping(address => bool) public whitelistedAddresses;
 
@@ -94,24 +82,7 @@ contract GutterCatChicks is ERC721, Ownable {
     // Constructor function that sets name and symbol
     // of the collection, cost, max supply and the maximum
     // amount a user can mint per transaction
-    constructor(
-        IERC1155 _cats,
-        IERC1155 _rats,
-        IERC1155 _dogs,
-        IERC1155 _pigeons,
-        IERC1155 _clones
-    ) ERC721("Gutter Cat Chicks", "GCX") {
-        gutterCats = _cats;
-        gutterCollections[0] = gutterCats;
-        gutterRats = _rats;
-        gutterCollections[1] = gutterRats;
-        gutterDogs = _dogs;
-        gutterCollections[2] = gutterDogs;
-        gutterPigeons = _pigeons;
-        gutterCollections[3] = gutterPigeons;
-        gutterClones = _clones;
-        gutterCollections[4] = gutterClones;
-    }
+    constructor() ERC721("Gutter Cat Chicks", "GCX") {}
 
     // Returns the current supply of the collection
     function totalSupply() public view returns (uint256) {
