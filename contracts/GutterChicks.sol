@@ -84,6 +84,9 @@ contract GutterCatChicks is ERC721, Ownable {
     // Mapping for keeping track of NFTs already used for minting in the pre-sale
     mapping(uint256 => mapping(uint256 => bool)) public usedTokens;
 
+    // Mapping of whitelisted addresses
+    mapping(address => bool) public whitelistedAddresses;
+
     // Rewards per hour per token deposited in wei.
     // Rewards are cumulated once every hour.
     uint256 private rewardsPerHour;
@@ -132,22 +135,12 @@ contract GutterCatChicks is ERC721, Ownable {
     }
 
     // Pre-Sale mint function for owners of Gutter Gang collections
-    function presaleMint(uint256 _collectionId, uint256 _tokenId)
-        external
-        payable
-    {
+    function presaleMint() external payable {
+        require(presale, "Presale is not active!");
         require(supply.current() + 1 <= maxSupply, "Max supply exceeded!");
-        require(
-            gutterCollections[_collectionId].balanceOf(msg.sender, _tokenId) >
-                0,
-            "You own no NFTs form the Gutter Collections!"
-        );
+        require(whitelistedAddresses[msg.sender], "You are not whitelisted!");
         require(msg.value >= presaleCost, "Insufficient funds!");
-        require(
-            usedTokens[_collectionId][_tokenId] == false,
-            "This token was alread used for minting"
-        );
-        usedTokens[_collectionId][_tokenId] = true;
+        whitelistedAddresses[msg.sender] = false;
         _mintLoop(msg.sender, 1);
     }
 
@@ -290,6 +283,16 @@ contract GutterCatChicks is ERC721, Ownable {
                     )
                 )
                 : "";
+    }
+
+    // Whitelist addresses
+    function whitelistAddresses(address[] calldata _addresses)
+        external
+        onlyOwner
+    {
+        for (uint256 i; i < _addresses.length; ++i) {
+            whitelistedAddresses[_addresses[i]] = true;
+        }
     }
 
     // Changes the Revealed State
