@@ -26,22 +26,25 @@ contract GutterCatChicks is ERC721, Ownable {
     string internal hiddenMetadataUri;
 
     // Price of one NFT
-    uint256 public cost = 0.05 ether;
+    uint256 public cost = 0.07 ether;
 
     // Price of one NFT for presale
-    uint256 public presaleCost = 0.04 ether;
+    uint256 public presaleCost = 0.05 ether;
 
     // The maximum supply of your collection
     uint256 public constant maxSupply = 3000;
 
     // Amount of Chicks minted from team reserve
-    uint256 public currentTeamSupply = 0;
+    uint256 public currentTeamSupply;
 
     // Amount of Chicks reserved for the team and giveaways
     uint256 public constant maxTeamSupply = 50;
 
-    // The maximum mint amount allowed per transaction
-    uint256 public maxMintAmountPerTx = 5;
+    // The maximum mint amount allowed per transaction in Main Sale
+    uint256 public maxMintAmountMainSale = 5;
+
+    // The maximum mint amount allowed per transaction in Pre Sale
+    uint256 public maxMintAmountPreSale = 3;
 
     // The paused state for minting
     bool public paused = true;
@@ -92,7 +95,7 @@ contract GutterCatChicks is ERC721, Ownable {
     // Mint function
     function mint(uint256 _mintAmount) public payable {
         require(
-            _mintAmount > 0 && _mintAmount <= maxMintAmountPerTx,
+            _mintAmount > 0 && _mintAmount <= maxMintAmountMainSale,
             "Invalid mint amount!"
         );
         require(
@@ -106,13 +109,20 @@ contract GutterCatChicks is ERC721, Ownable {
     }
 
     // Pre-Sale mint function for owners of Gutter Gang collections
-    function presaleMint() external payable {
+    function presaleMint(uint256 _mintAmount) external payable {
+        require(
+            _mintAmount > 0 && _mintAmount <= maxMintAmountPreSale,
+            "Invalid mint amount!"
+        );
         require(presale, "Presale is not active!");
-        require(supply.current() + 1 <= maxSupply, "Max supply exceeded!");
+        require(
+            supply.current() + _mintAmount <= maxSupply - maxTeamSupply,
+            "Max supply exceeded!"
+        );
         require(whitelistedAddresses[msg.sender], "You are not whitelisted!");
-        require(msg.value >= presaleCost, "Insufficient funds!");
+        require(msg.value >= presaleCost * _mintAmount, "Insufficient funds!");
         whitelistedAddresses[msg.sender] = false;
-        _mintLoop(msg.sender, 1);
+        _mintLoop(msg.sender, _mintAmount);
     }
 
     // Mint function for owner that allows for free minting for a specified address
@@ -274,14 +284,6 @@ contract GutterCatChicks is ERC721, Ownable {
     // Set the mint cost of one NFT
     function setCost(uint256 _cost) public onlyOwner {
         cost = _cost;
-    }
-
-    // Set the maximum mint amount per transaction
-    function setMaxMintAmountPerTx(uint256 _maxMintAmountPerTx)
-        public
-        onlyOwner
-    {
-        maxMintAmountPerTx = _maxMintAmountPerTx;
     }
 
     // Set the hidden metadata URI
