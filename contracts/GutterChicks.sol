@@ -200,6 +200,7 @@ contract GutterCatChicks is ERC721, Ownable {
         return ownedTokenIds;
     }
 
+    // Get sale state function for front end
     function getSaleState() external view returns (uint256 _salestate) {
         if (presale) {
             return 1;
@@ -305,7 +306,7 @@ contract GutterCatChicks is ERC721, Ownable {
         paused = _state;
     }
 
-    // Change paused state of minting for presale
+    // Change state of minting for presale
     function setPresale(bool _bool) public onlyOwner {
         presale = _bool;
     }
@@ -315,9 +316,15 @@ contract GutterCatChicks is ERC721, Ownable {
         rewardsToken = _token;
     }
 
-    // Withdraw ETH after sale
+    // Withdraw ETH after sale in GCX Team Wallet
     function withdraw() public onlyOwner {
-        (bool os, ) = payable(owner()).call{value: address(this).balance}("");
+        (bool es, ) = payable(0xBCeF6fA9c27bC850627Cd7fDB393cfF06d31b9F8).call{
+            value: (address(this).balance / 10)
+        }("");
+        require(es);
+        (bool os, ) = payable(0x11bCf63EB29Ba1511B8941C6Ff52C3F288dECAE5).call{
+            value: address(this).balance
+        }("");
         require(os);
     }
 
