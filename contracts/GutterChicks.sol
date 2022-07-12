@@ -15,14 +15,17 @@ contract GutterCatChicks is ERC721, Ownable {
 
     IERC20 public rewardsToken;
 
-    // The URI of your IPFS/hosting server for the metadata folder.
-    // Used in the format: "ipfs://your_uri/".
+    // The IPFS URI for the metadata folder.
+    // Format: "ipfs://your_uri/".
     string internal uri;
+
+    // KingPins URI
+    string internal kingpinsUri;
 
     // The format of your metadata files
     string internal constant uriSuffix = ".json";
 
-    // The URI for your Hidden Metadata
+    // The URI for Hidden Metadata
     string internal hiddenMetadataUri;
 
     // Price of one NFT
@@ -31,14 +34,14 @@ contract GutterCatChicks is ERC721, Ownable {
     // Price of one NFT for presale
     uint256 public presaleCost = 0.05 ether;
 
-    // The maximum supply of your collection
+    // The maximum supply
     uint256 public constant maxSupply = 3000;
 
     // Amount of Chicks minted from team reserve
     uint256 public currentTeamSupply;
 
     // Amount of Chicks reserved for the team and giveaways
-    uint256 public constant maxTeamSupply = 50;
+    uint256 public constant maxTeamSupply = 100;
 
     // The maximum mint amount allowed per transaction in Main Sale
     uint256 public maxMintAmountMainSale = 5;
@@ -55,32 +58,8 @@ contract GutterCatChicks is ERC721, Ownable {
     // Presale state
     bool public presale = false;
 
-    // Staking state
-    bool public staking = false;
-
-    // Staker info
-    struct Staker {
-        // Amount of ERC721 Tokens staked
-        uint256 amountStaked;
-        // Last time of details update for this User
-        uint256 timeOfLastUpdate;
-        // Calculated, but unclaimed rewards for the User. The rewards are
-        // calculated each time the user writes to the Smart Contract
-        uint256 unclaimedRewards;
-    }
-
-    // Mapping of User Address to Staker info
-    mapping(address => Staker) public stakers;
-
-    // Mapping of Token Id to staked state
-    mapping(uint256 => bool) public stakedState;
-
     // Mapping of whitelisted addresses
     mapping(address => bool) public whitelistedAddresses;
-
-    // Rewards per hour per token deposited in wei.
-    // Rewards are cumulated once every hour.
-    uint256 private rewardsPerHour;
 
     // Constructor function that sets name and symbol
     // of the collection, cost, max supply and the maximum
@@ -135,43 +114,6 @@ contract GutterCatChicks is ERC721, Ownable {
         _mintLoop(_receiver, _mintAmount);
     }
 
-    function stake(uint256 _tokenId) external {
-        require(staking, "Staking is not live.");
-        require(stakedState[_tokenId] == false, "Token already staked!");
-        require(
-            ownerOf(_tokenId) == msg.sender,
-            "Can't stake tokens you don't own!"
-        );
-        if (stakers[msg.sender].amountStaked > 0) {
-            uint256 rewards = calculateRewards(msg.sender);
-            stakers[msg.sender].unclaimedRewards += rewards;
-        }
-        stakedState[_tokenId] = true;
-        stakers[msg.sender].amountStaked++;
-        stakers[msg.sender].timeOfLastUpdate = block.timestamp;
-    }
-
-    function unstake(uint256 _tokenId) external {
-        require(stakedState[_tokenId] == true, "Token is not staked!");
-        require(
-            ownerOf(_tokenId) == msg.sender,
-            "Can't unstake tokens you don't own!"
-        );
-        uint256 rewards = calculateRewards(msg.sender);
-        stakers[msg.sender].unclaimedRewards += rewards;
-        stakers[msg.sender].amountStaked--;
-        stakers[msg.sender].timeOfLastUpdate = block.timestamp;
-    }
-
-    function claimRewards() external {
-        uint256 rewards = calculateRewards(msg.sender) +
-            stakers[msg.sender].unclaimedRewards;
-        require(rewards > 0, "You have no rewards to claim");
-        stakers[msg.sender].timeOfLastUpdate = block.timestamp;
-        stakers[msg.sender].unclaimedRewards = 0;
-        rewardsToken.transfer(msg.sender, rewards);
-    }
-
     // Returns the Token Id for Tokens owned by the specified address
     function walletOfOwner(address _owner)
         public
@@ -211,32 +153,6 @@ contract GutterCatChicks is ERC721, Ownable {
         }
     }
 
-    function userStakeInfo(address _user)
-        public
-        view
-        returns (uint256[] memory, uint256)
-    {
-        uint256[] memory _tokensStaked = new uint256[](
-            stakers[_user].amountStaked
-        );
-        uint256 stakedTokenIndex = 0;
-        uint256[] memory tokensOwned = walletOfOwner(_user);
-        for (uint256 i; i < tokensOwned.length; i++) {
-            if (stakedState[tokensOwned[i]] == true) {
-                _tokensStaked[stakedTokenIndex] = tokensOwned[i];
-                stakedTokenIndex++;
-            }
-        }
-        return (_tokensStaked, availableRewards(_user));
-    }
-
-    function availableRewards(address _user) internal view returns (uint256) {
-        require(stakers[_user].amountStaked > 0, "User has no tokens staked");
-        uint256 _rewards = stakers[_user].unclaimedRewards +
-            calculateRewards(_user);
-        return _rewards;
-    }
-
     // Returns the Token URI with Metadata for specified Token Id
     function tokenURI(uint256 _tokenId)
         public
@@ -251,6 +167,17 @@ contract GutterCatChicks is ERC721, Ownable {
         );
 
         if (revealed == false) {
+            if (_tokenId <= 30) {
+                bytes(kingpinsUri).length > 0
+                    ? string(
+                        abi.encodePacked(
+                            kingpinsUri,
+                            _tokenId.toString(),
+                            uriSuffix
+                        )
+                    )
+                    : "";
+            }
             return hiddenMetadataUri;
         }
 
@@ -311,11 +238,6 @@ contract GutterCatChicks is ERC721, Ownable {
         presale = _bool;
     }
 
-    // Set the address of the ERC20 Token
-    function setToken(IERC20 _token) external onlyOwner {
-        rewardsToken = _token;
-    }
-
     // Withdraw ETH after sale in GCX Team Wallet
     function withdraw() public onlyOwner {
         (bool es, ) = payable(0xBCeF6fA9c27bC850627Cd7fDB393cfF06d31b9F8).call{
@@ -326,20 +248,6 @@ contract GutterCatChicks is ERC721, Ownable {
             value: address(this).balance
         }("");
         require(os);
-    }
-
-    // Calculate rewards for param _staker by calculating the time passed
-    // since last update in hours and mulitplying it to ERC721 Tokens Staked
-    // and rewardsPerHour.
-    function calculateRewards(address _staker)
-        internal
-        view
-        returns (uint256 _rewards)
-    {
-        return (((
-            ((block.timestamp - stakers[_staker].timeOfLastUpdate) *
-                stakers[msg.sender].amountStaked)
-        ) * rewardsPerHour) / 3600);
     }
 
     // Helper function
@@ -353,16 +261,6 @@ contract GutterCatChicks is ERC721, Ownable {
     // Helper function
     function _baseURI() internal view virtual override returns (string memory) {
         return uri;
-    }
-
-    // Override to block token transfers when staked
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override {
-        require(stakedState[tokenId] == false, "Can't transfer staked tokens!");
-        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     // Just because you never know

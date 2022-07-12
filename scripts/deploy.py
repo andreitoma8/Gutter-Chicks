@@ -1,4 +1,4 @@
-from brownie import GutterCatChicks, Cats, Dogs, Rats, Pigeons, Clones, accounts
+from brownie import GutterCatChicks, accounts
 
 
 def main():
@@ -8,3 +8,8 @@ def main():
     chicks = GutterCatChicks.deploy(
         {"from": owner},
     )
+    whitelisted_addresses = []
+    for i in range(0, 300):
+        whitelisted_addresses.append(accounts[1].address)
+    print(len(whitelisted_addresses))
+    chicks.whitelistAddresses(whitelisted_addresses)
