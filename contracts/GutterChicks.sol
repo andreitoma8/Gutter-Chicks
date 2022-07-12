@@ -165,8 +165,7 @@ contract GutterCatChicks is ERC721, Ownable {
             _exists(_tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
-
-        if (revealed == false) {
+        if (!revealed) {
             if (_tokenId <= 30) {
                 bytes(kingpinsUri).length > 0
                     ? string(
@@ -180,7 +179,6 @@ contract GutterCatChicks is ERC721, Ownable {
             }
             return hiddenMetadataUri;
         }
-
         string memory currentBaseURI = _baseURI();
         return
             bytes(currentBaseURI).length > 0
