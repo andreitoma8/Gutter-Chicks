@@ -7,20 +7,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
-contract GutterCatChicks is ERC721, Ownable {
+contract GutterChicks is ERC721, Ownable {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
     Counters.Counter private supply;
 
-    IERC20 public rewardsToken;
-
     // The IPFS URI for the metadata folder.
     // Format: "ipfs://your_uri/".
     string internal uri;
 
-    // KingPins URI
-    string internal kingpinsUri;
+    // Custom Chicks URI
+    string internal customUri;
 
     // The format of your metadata files
     string internal constant uriSuffix = ".json";
@@ -64,7 +62,7 @@ contract GutterCatChicks is ERC721, Ownable {
     // Constructor function that sets name and symbol
     // of the collection, cost, max supply and the maximum
     // amount a user can mint per transaction
-    constructor() ERC721("Gutter Cat Chicks", "GCX") {}
+    constructor() ERC721("Gutter Chicks", "GCX") {}
 
     // Returns the current supply of the collection
     function totalSupply() public view returns (uint256) {
@@ -167,10 +165,10 @@ contract GutterCatChicks is ERC721, Ownable {
         );
         if (!revealed) {
             if (_tokenId <= 30) {
-                bytes(kingpinsUri).length > 0
+                bytes(customUri).length > 0
                     ? string(
                         abi.encodePacked(
-                            kingpinsUri,
+                            customUri,
                             _tokenId.toString(),
                             uriSuffix
                         )
@@ -220,10 +218,14 @@ contract GutterCatChicks is ERC721, Ownable {
         hiddenMetadataUri = _hiddenMetadataUri;
     }
 
-    // Set the URI of your IPFS/hosting server for the metadata folder.
-    // Used in the format: "ipfs://your_uri/".
+    // Set the URI
     function setUri(string memory _uri) public onlyOwner {
         uri = _uri;
+    }
+
+    // Set the URI
+    function setCustomUri(string memory _customUri) public onlyOwner {
+        customUri = _customUri;
     }
 
     // Change paused state for main minting
