@@ -1,15 +1,11 @@
-from brownie import GutterCatChicks, accounts
+from brownie import GutterCatChicks, accounts, config
 
 
 def main():
-    owner = accounts[0]
-    # Deploy mocks
+    owner = accounts.add(config["wallets"]["from_key"])
     # Deploy chicks SC
     chicks = GutterCatChicks.deploy(
-        {"from": owner},
+        {"from": owner}, publish_source=True
     )
     whitelisted_addresses = []
-    for i in range(0, 300):
-        whitelisted_addresses.append(accounts[1].address)
-    print(len(whitelisted_addresses))
     chicks.whitelistAddresses(whitelisted_addresses)
